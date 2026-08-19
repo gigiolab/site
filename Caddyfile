@@ -1,0 +1,16 @@
+# TLS fica com o Traefik do Dokploy; aqui é só servir estático na :8080.
+:8080 {
+	root * /srv
+	file_server
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# .dev é HSTS-preloaded nos navegadores; o header reforça.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	}
+
+	@assets path *.svg *.png *.woff2
+	header @assets Cache-Control "public, max-age=604800"
+}
