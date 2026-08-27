@@ -359,20 +359,89 @@
 
     .contato .email:hover { border-bottom-color: var(--terra); }
 
-    .kit {
+    /* ---------- form de contato ---------- */
+    .form {
       background: var(--graphite);
       border: 1px solid var(--hairline);
       border-radius: 12px;
       padding: 28px;
-      font-family: var(--mono);
-      font-size: .82rem;
-      line-height: 1.8;
-      color: var(--silver);
-      overflow-x: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
 
-    .kit .c-terra { color: var(--terra); }
-    .kit .c-off { color: var(--off); }
+    .form-row { display: flex; flex-direction: column; gap: 6px; }
+
+    .form-row label {
+      font-family: var(--mono);
+      font-size: .7rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--terra);
+    }
+
+    .form-row input,
+    .form-row textarea {
+      font: inherit;
+      font-family: var(--body);
+      font-size: .95rem;
+      color: var(--off);
+      background: var(--obsidian);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 12px 14px;
+      transition: border-color .15s ease;
+      resize: vertical;
+    }
+
+    .form-row textarea { min-height: 120px; line-height: 1.5; }
+
+    .form-row input:focus,
+    .form-row textarea:focus {
+      outline: none;
+      border-color: var(--terra);
+    }
+
+    .form-row input::placeholder,
+    .form-row textarea::placeholder { color: rgba(168, 168, 168, .5); }
+
+    /* honeypot — precisa existir no DOM mas ninguém vê */
+    .form-hp {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .form-submit {
+      align-self: flex-start;
+      margin-top: 4px;
+      font-family: var(--title);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--obsidian);
+      background: var(--terra);
+      border: 0;
+      padding: 13px 28px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .15s ease, transform .15s ease;
+    }
+
+    .form-submit:hover:not(:disabled) { background: #e08a68; transform: translateY(-1px); }
+    .form-submit:disabled { opacity: .5; cursor: wait; }
+
+    .form-status {
+      font-family: var(--mono);
+      font-size: .82rem;
+      color: var(--silver);
+      min-height: 1.2em;
+    }
+
+    .form-status.ok { color: var(--terra); }
+    .form-status.err { color: #e08a68; }
 
     /* ---------- footer ---------- */
     footer {
@@ -507,20 +576,27 @@
           <p class="quem">Sem comercial, sem fila de atendimento. Manda o problema, eu respondo com proposta.</p>
           <a class="email" href="mailto:geovane@gigiolab.dev?subject=Fala%20com%20a%20f%C3%A1brica">geovane@gigiolab.dev</a>
         </div>
-        <div class="kit" aria-hidden="true">
-          <span class="c-terra">&gt; gigiolab.dev</span><br>
-          <span class="c-terra">&gt; Fábrica de Software</span><br>
-          <br>
-          <span class="c-off">const</span> gigiolab = {<br>
-          &nbsp;&nbsp;engenharia: <span class="c-off">true</span>,<br>
-          &nbsp;&nbsp;conversa: <span class="c-terra">'reta'</span>,<br>
-          &nbsp;&nbsp;entrega: <span class="c-terra">'em producao'</span><br>
-          };<br>
-          <br>
-          <span class="c-off">constroi();</span><br>
-          <span class="c-off">entrega();</span><br>
-          <span class="c-off">escala();</span>
-        </div>
+        <form class="form" id="contact-form" novalidate>
+          <div class="form-row">
+            <label for="cf-name">Nome</label>
+            <input type="text" id="cf-name" name="name" required autocomplete="name" maxlength="100">
+          </div>
+          <div class="form-row">
+            <label for="cf-email">E-mail</label>
+            <input type="email" id="cf-email" name="email" required autocomplete="email" maxlength="254">
+          </div>
+          <div class="form-row">
+            <label for="cf-message">Mensagem</label>
+            <textarea id="cf-message" name="message" required maxlength="5000" placeholder="Descreve o problema. Respondo com proposta."></textarea>
+          </div>
+          <!-- honeypot: bots preenchem, humanos não veem -->
+          <div class="form-hp" aria-hidden="true">
+            <label for="cf-website">Website (não preencha)</label>
+            <input type="text" id="cf-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <button type="submit" class="form-submit">Enviar</button>
+          <p class="form-status" id="cf-status" aria-live="polite"></p>
+        </form>
       </div>
     </section>
 
@@ -530,5 +606,44 @@
     </footer>
   </div>
 
+  <script>
+    // Endpoint do Worker. Substituir pelo `.workers.dev` real após `wrangler deploy`.
+    const FORM_ENDPOINT = "https://gigiolab-form.SUBDOMINIO-CLOUDFLARE.workers.dev";
+
+    (function () {
+      const form = document.getElementById("contact-form");
+      const status = document.getElementById("cf-status");
+      const submit = form.querySelector(".form-submit");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        status.className = "form-status";
+        status.textContent = "Enviando…";
+        submit.disabled = true;
+        try {
+          const r = await fetch(FORM_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          const j = await r.json().catch(() => ({ ok: false, error: "resposta inválida" }));
+          if (r.ok && j.ok) {
+            status.className = "form-status ok";
+            status.textContent = "Mensagem enviada. Respondo o quanto antes.";
+            form.reset();
+          } else {
+            status.className = "form-status err";
+            status.textContent = j.error || "Falhou. Tenta de novo daqui a pouco.";
+          }
+        } catch {
+          status.className = "form-status err";
+          status.textContent = "Falha de conexão. Tenta de novo.";
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
