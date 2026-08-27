@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>gigiolab.dev — Fábrica de Software</title>
-  <meta name="description" content="Fábrica de software em Maceió: sistemas sob medida que entram no ar e aguentam o tranco. Constrói. Entrega. Escala.">
+  <meta name="description" content="Fábrica de software que gera solução: código limpo, entrega no prazo, do problema ao deploy. Sem desculpas técnicas.">
   <link rel="canonical" href="https://gigiolab.dev/">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
   <meta name="theme-color" content="#0A0A0A">
@@ -12,7 +12,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://gigiolab.dev/">
   <meta property="og:title" content="gigiolab.dev — Fábrica de Software">
-  <meta property="og:description" content="Seu sistema, no ar, aguentando o tranco. Constrói. Entrega. Escala.">
+  <meta property="og:description" content="Desenho e construo. Código limpo, entrega no prazo, do problema ao deploy — sem desculpas técnicas.">
   <meta property="og:image" content="https://gigiolab.dev/og.png">
   <meta property="og:locale" content="pt_BR">
   <meta name="twitter:card" content="summary">
@@ -108,27 +108,77 @@
       max-width: 18ch;
     }
 
-    .hero .sub {
-      margin-top: 24px;
-      font-size: 1.05rem;
+    .hero-eyebrow {
+      margin-bottom: 22px;
+      font-family: var(--mono);
+      font-size: .85rem;
+      color: var(--terra);
+      letter-spacing: .02em;
+    }
+
+    .hero .sub-light,
+    .hero .sub-bold {
+      font-family: var(--title);
+      font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+    }
+
+    .hero .sub-light {
+      margin-top: 26px;
+      font-weight: 500;
+      color: var(--off);
+    }
+
+    .hero .sub-bold {
+      margin-top: 4px;
+      font-weight: 700;
+      color: var(--terra);
+    }
+
+    .hero-mono-desc {
+      margin-top: 30px;
+      font-family: var(--mono);
+      font-size: .85rem;
+      line-height: 1.65;
       color: var(--silver);
+      max-width: 58ch;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 36px;
     }
 
     .cta {
       display: inline-block;
-      margin-top: 40px;
       font-family: var(--title);
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: var(--obsidian);
       background: var(--terra);
       text-decoration: none;
-      padding: 15px 30px;
+      padding: 14px 28px;
       border-radius: 10px;
-      transition: transform .15s ease, background .15s ease;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
     }
 
     .cta:hover { background: #e08a68; transform: translateY(-2px); }
+
+    .cta.cta-secondary {
+      background: transparent;
+      color: var(--off);
+      border: 1px solid var(--hairline);
+      padding: 13px 27px; /* -1px pra compensar border e alinhar altura */
+    }
+
+    .cta.cta-secondary:hover {
+      background: transparent;
+      color: var(--terra);
+      border-color: var(--terra);
+    }
 
     .term {
       margin-top: 44px;
@@ -481,16 +531,22 @@
     </header>
 
     <section class="hero">
-      <h1>Seu sistema, no ar, aguentando o tranco.</h1>
-      <p class="sub">Fábrica de software · engenharia de gente grande, conversa de gente simples.</p>
-      <a class="cta" href="mailto:geovane@gigiolab.dev?subject=Fala%20com%20a%20f%C3%A1brica">Fala com a fábrica</a>
+      <p class="hero-eyebrow">// Fábrica de software que gera solução</p>
+      <h1>Desenho e construo.</h1>
+      <p class="sub sub-light">Aqui é código limpo e entrega no prazo.</p>
+      <p class="sub sub-bold">Sem desculpas técnicas.</p>
+      <p class="hero-mono-desc">Sua busca por "alguém que resolve" acaba aqui. Cuido de toda a engenharia — do problema ao deploy — pra você focar em seu negócio.</p>
+      <div class="hero-ctas">
+        <a class="cta" href="mailto:geovane@gigiolab.dev?subject=Contato%20pelo%20site">Fala comigo</a>
+        <a class="cta cta-secondary" href="#producao">Ver a linha de produção</a>
+      </div>
       <p class="term"><span class="prompt">$</span> gigiolab ship --prod<span class="cursor"></span></p>
     </section>
 
     <section class="manifesto" id="manifesto">
       <div class="eyebrow">Manifesto</div>
       <p>A GigioLab não nasceu em pitch de investidor. Nasceu de trinta anos de teclado — e de um apelido de infância que virou nome de oficina.</p>
-      <p class="meio">Aqui, engenharia não é palavra de slide: é sistema no ar, aguentando o tranco de segunda-feira de manhã.</p>
+      <p class="meio">Aqui, engenharia não é palavra de slide: é sistema no ar, resolvendo problema de segunda-feira de manhã.</p>
       <p>A gente não vende inovação. Vende software que embarca, com conversa reta e chave na mão do cliente.</p>
       <p class="tag">Constrói. Entrega. Escala.</p>
     </section>
@@ -574,7 +630,7 @@
         <div>
           <h2>Quem contrata a GigioLab fala com quem constrói.</h2>
           <p class="quem">Sem comercial, sem fila de atendimento. Manda o problema, eu respondo com proposta.</p>
-          <a class="email" href="mailto:geovane@gigiolab.dev?subject=Fala%20com%20a%20f%C3%A1brica">geovane@gigiolab.dev</a>
+          <a class="email" href="mailto:geovane@gigiolab.dev?subject=Contato%20pelo%20site">geovane@gigiolab.dev</a>
         </div>
         <form class="form" id="contact-form" novalidate>
           <div class="form-row">
