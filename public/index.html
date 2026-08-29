@@ -409,89 +409,124 @@
 
     .contato .email:hover { border-bottom-color: var(--terra); }
 
-    /* ---------- form de contato ---------- */
-    .form {
+    /* ---------- chat de contato ---------- */
+    .chat {
       background: var(--graphite);
       border: 1px solid var(--hairline);
       border-radius: 12px;
-      padding: 28px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 14px;
     }
 
-    .form-row { display: flex; flex-direction: column; gap: 6px; }
-
-    .form-row label {
+    .chat-head {
       font-family: var(--mono);
       font-size: .7rem;
       letter-spacing: .12em;
       text-transform: uppercase;
       color: var(--terra);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .form-row input,
-    .form-row textarea {
+    .chat-head::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--terra);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+    .chat-log {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 220px;
+      max-height: 380px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      padding-right: 4px;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: .95rem;
+      line-height: 1.5;
+      color: var(--off);
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--obsidian);
+      border: 1px solid var(--hairline);
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg.eu {
+      align-self: flex-end;
+      background: rgba(217, 119, 87, .16);
+      border: 1px solid rgba(217, 119, 87, .35);
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.digitando { font-family: var(--mono); color: var(--silver); }
+    .msg.digitando::after { content: "…"; animation: pulse 1s ease-in-out infinite; }
+
+    .msg a { color: var(--terra); }
+
+    .chat-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input-row input {
+      flex: 1;
       font: inherit;
       font-family: var(--body);
       font-size: .95rem;
       color: var(--off);
       background: var(--obsidian);
       border: 1px solid var(--hairline);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 12px 14px;
       transition: border-color .15s ease;
-      resize: vertical;
+      min-width: 0;
     }
 
-    .form-row textarea { min-height: 120px; line-height: 1.5; }
+    .chat-input-row input:focus { outline: none; border-color: var(--terra); }
+    .chat-input-row input::placeholder { color: rgba(168, 168, 168, .5); }
 
-    .form-row input:focus,
-    .form-row textarea:focus {
-      outline: none;
-      border-color: var(--terra);
-    }
-
-    .form-row input::placeholder,
-    .form-row textarea::placeholder { color: rgba(168, 168, 168, .5); }
-
-    /* honeypot — precisa existir no DOM mas ninguém vê */
-    .form-hp {
-      position: absolute;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .form-submit {
-      align-self: flex-start;
-      margin-top: 4px;
+    .chat-send {
       font-family: var(--title);
       font-weight: 700;
-      font-size: 1rem;
+      font-size: .95rem;
       color: var(--obsidian);
       background: var(--terra);
       border: 0;
-      padding: 13px 28px;
+      padding: 0 22px;
       border-radius: 10px;
       cursor: pointer;
       transition: background .15s ease, transform .15s ease;
     }
 
-    .form-submit:hover:not(:disabled) { background: #e08a68; transform: translateY(-1px); }
-    .form-submit:disabled { opacity: .5; cursor: wait; }
+    .chat-send:hover:not(:disabled) { background: #e08a68; transform: translateY(-1px); }
+    .chat-send:disabled { opacity: .5; cursor: wait; }
 
-    .form-status {
+    .chat-nota {
       font-family: var(--mono);
-      font-size: .82rem;
+      font-size: .72rem;
       color: var(--silver);
       min-height: 1.2em;
     }
-
-    .form-status.ok { color: var(--terra); }
-    .form-status.err { color: #e08a68; }
 
     /* ---------- footer ---------- */
     footer {
@@ -632,27 +667,16 @@
           <p class="quem">Sem comercial, sem fila de atendimento. Manda o problema, eu respondo com proposta.</p>
           <a class="email" href="mailto:geovane@gigiolab.dev?subject=Contato%20pelo%20site">geovane@gigiolab.dev</a>
         </div>
-        <form class="form" id="contact-form" novalidate>
-          <div class="form-row">
-            <label for="cf-name">Nome</label>
-            <input type="text" id="cf-name" name="name" required autocomplete="name" maxlength="100">
+        <div class="chat" id="chat">
+          <div class="chat-head">Atendimento da fábrica</div>
+          <div class="chat-log" id="chat-log" aria-live="polite"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" maxlength="500" autocomplete="off"
+                   placeholder="Escreve aqui, do seu jeito…" aria-label="Sua mensagem">
+            <button type="button" class="chat-send" id="chat-send">Enviar</button>
           </div>
-          <div class="form-row">
-            <label for="cf-email">E-mail</label>
-            <input type="email" id="cf-email" name="email" required autocomplete="email" maxlength="254">
-          </div>
-          <div class="form-row">
-            <label for="cf-message">Mensagem</label>
-            <textarea id="cf-message" name="message" required maxlength="5000" placeholder="Descreve o problema. Respondo com proposta."></textarea>
-          </div>
-          <!-- honeypot: bots preenchem, humanos não veem -->
-          <div class="form-hp" aria-hidden="true">
-            <label for="cf-website">Website (não preencha)</label>
-            <input type="text" id="cf-website" name="website" tabindex="-1" autocomplete="off">
-          </div>
-          <button type="submit" class="form-submit">Enviar</button>
-          <p class="form-status" id="cf-status" aria-live="polite"></p>
-        </form>
+          <p class="chat-nota" id="chat-nota">Conversa com IA · quem responde a proposta é o Geovane.</p>
+        </div>
       </div>
     </section>
 
@@ -663,42 +687,99 @@
   </div>
 
   <script>
-    // Endpoint do Worker. Substituir pelo `.workers.dev` real após `wrangler deploy`.
-    const FORM_ENDPOINT = "https://gigiolab-form.SUBDOMINIO-CLOUDFLARE.workers.dev";
-
+    // Chat de intake — conversa com o agente da GigioLab (backend em /api/intake).
+    // Em produção o endpoint é same-origin; em dev local aponta pro server na :8787.
     (function () {
-      const form = document.getElementById("contact-form");
-      const status = document.getElementById("cf-status");
-      const submit = form.querySelector(".form-submit");
+      const PROD = location.hostname === "gigiolab.dev" || location.hostname === "www.gigiolab.dev";
+      const API = PROD ? "/api/intake" : "http://localhost:8787/api/intake";
+      const MAX_TURNS = 40;
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
-        status.className = "form-status";
-        status.textContent = "Enviando…";
-        submit.disabled = true;
+      const log = document.getElementById("chat-log");
+      const input = document.getElementById("chat-input");
+      const send = document.getElementById("chat-send");
+      const nota = document.getElementById("chat-nota");
+
+      const ABERTURA =
+        "Oi! Aqui é o atendimento da GigioLab. Me conta o que você precisa — " +
+        "pode falar do seu jeito, sem termo técnico. O que está te dando trabalho aí na sua operação?";
+
+      const history = [{ role: "assistant", content: ABERTURA }];
+      let busy = false;
+      let offline = false;
+
+      function bubble(cls, text) {
+        const el = document.createElement("div");
+        el.className = "msg " + cls;
+        el.textContent = text;
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+        return el;
+      }
+
+      function fallback() {
+        offline = true;
+        const el = document.createElement("div");
+        el.className = "msg bot";
+        el.innerHTML =
+          "Nosso atendimento deu uma engasgada agora. Me escreve direto em " +
+          '<a href="mailto:geovane@gigiolab.dev?subject=Contato%20pelo%20site">geovane@gigiolab.dev</a> ' +
+          "que eu respondo — ou tenta de novo daqui a pouco.";
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      async function enviar() {
+        const text = input.value.trim();
+        if (!text || busy) return;
+        if (history.length >= MAX_TURNS) {
+          fallback();
+          return;
+        }
+
+        input.value = "";
+        bubble("eu", text);
+        history.push({ role: "user", content: text });
+
+        busy = true;
+        send.disabled = true;
+        const typing = bubble("bot digitando", "");
+
         try {
-          const r = await fetch(FORM_ENDPOINT, {
+          const r = await fetch(API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
+            body: JSON.stringify({ messages: history }),
           });
-          const j = await r.json().catch(() => ({ ok: false, error: "resposta inválida" }));
-          if (r.ok && j.ok) {
-            status.className = "form-status ok";
-            status.textContent = "Mensagem enviada. Respondo o quanto antes.";
-            form.reset();
+          const j = await r.json().catch(() => null);
+          typing.remove();
+          if (r.ok && j && j.ok && j.reply) {
+            bubble("bot", j.reply);
+            history.push({ role: "assistant", content: j.reply });
+            if (j.registered) nota.textContent = "Recado anotado ✓ · o Geovane te chama.";
+          } else if (r.status === 429) {
+            bubble("bot", (j && j.error) || "Calma aí — muitas mensagens. Tenta daqui a pouco.");
           } else {
-            status.className = "form-status err";
-            status.textContent = j.error || "Falhou. Tenta de novo daqui a pouco.";
+            fallback();
           }
         } catch {
-          status.className = "form-status err";
-          status.textContent = "Falha de conexão. Tenta de novo.";
+          typing.remove();
+          fallback();
         } finally {
-          submit.disabled = false;
+          busy = false;
+          send.disabled = offline;
+          if (!offline) input.focus();
+        }
+      }
+
+      send.addEventListener("click", enviar);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          enviar();
         }
       });
+
+      bubble("bot", ABERTURA);
     })();
   </script>
 </body>
