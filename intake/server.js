@@ -162,8 +162,31 @@ function readBody(req, maxBytes) {
 
 function saveLead(lead) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  // dedupe: mesmo contato registrado na última hora = atualização, não lead novo
+  const chave = String(lead.contato || "").replace(/\D/g, "");
+  if (chave) {
+    const umaHora = Date.now() - 60 * 60 * 1000;
+    for (const l of readLeads()) {
+      if (String(l.contato || "").replace(/\D/g, "") === chave && Date.parse(l.ts) > umaHora) {
+        console.log(`[lead] duplicado ignorado: ${lead.nome || "?"} · ${lead.contato}`);
+        return;
+      }
+    }
+  }
   fs.appendFileSync(LEADS_FILE, JSON.stringify(lead) + "\n", "utf8");
   console.log(`[lead] ${lead.nome || "?"} · ${lead.contato || "?"}`);
+}
+
+function readLeads() {
+  try {
+    return fs
+      .readFileSync(LEADS_FILE, "utf8")
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l));
+  } catch (_) {
+    return [];
+  }
 }
 
 function sanitizeMessages(raw) {
@@ -354,14 +377,13 @@ function handleListLeads(req, res) {
   if (!ADMIN_TOKEN || token !== ADMIN_TOKEN) {
     return json(res, 401, { ok: false, error: "não autorizado" });
   }
-  let leads = [];
-  try {
-    leads = fs
-      .readFileSync(LEADS_FILE, "utf8")
-      .split("\n")
-      .filter(Boolean)
-      .map((l) => JSON.parse(l));
-  } catch (_) {}
+  // dedupe na exibição: mantém o registro mais recente de cada contato
+  const porContato = new Map();
+  for (const l of readLeads()) {
+    const chave = String(l.contato || "").replace(/\D/g, "") || JSON.stringify(l);
+    porContato.set(chave, l);
+  }
+  const leads = [...porContato.values()];
   return json(res, 200, { ok: true, total: leads.length, leads });
 }
 
