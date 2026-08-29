@@ -283,6 +283,71 @@ async function handleDirectLead(req, res, origin) {
   return json(res, 200, { ok: true }, corsHeaders(origin));
 }
 
+const PAINEL_HTML = `<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Leads — GigioLab</title>
+<style>
+  :root { --bg:#0B0B0D; --card:#141417; --line:#26262b; --off:#EDEDEF; --dim:#9b9ba3; --terra:#D97757; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--off); font:15px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif; padding:20px; max-width:760px; margin:0 auto; }
+  h1 { font-size:1.15rem; letter-spacing:.02em; margin-bottom:4px; }
+  h1 b { color:var(--terra); }
+  .sub { color:var(--dim); font-size:.8rem; margin-bottom:20px; font-family:ui-monospace,Menlo,monospace; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  .card h2 { font-size:1rem; display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .quando { color:var(--dim); font-size:.72rem; font-family:ui-monospace,Menlo,monospace; font-weight:400; }
+  .zap { display:inline-block; margin:8px 0 2px; color:var(--terra); font-family:ui-monospace,Menlo,monospace; font-size:.95rem; text-decoration:none; border-bottom:1px solid rgba(217,119,87,.4); }
+  dl { margin-top:10px; display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; font-size:.86rem; }
+  dt { color:var(--dim); text-transform:uppercase; font-size:.66rem; letter-spacing:.1em; font-family:ui-monospace,Menlo,monospace; padding-top:3px; }
+  dd { color:var(--off); }
+  .resumo { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); color:var(--dim); font-size:.88rem; }
+  .vazio, #erro { color:var(--dim); text-align:center; padding:40px 0; }
+  #gate { display:none; text-align:center; padding:60px 0; }
+  #gate input { background:var(--card); border:1px solid var(--line); border-radius:8px; color:var(--off); padding:12px 14px; width:min(320px,90%); font:inherit; }
+  #gate button, .toolbar button { background:var(--terra); border:0; border-radius:8px; color:#151312; font:inherit; font-weight:600; padding:12px 22px; margin-top:12px; cursor:pointer; }
+  .toolbar { display:flex; justify-content:flex-end; margin-bottom:14px; }
+  .toolbar button { margin:0; padding:8px 16px; font-size:.85rem; }
+</style></head><body>
+<h1>Leads — <b>GigioLab</b></h1>
+<div class="sub" id="sub">carregando…</div>
+<div id="gate"><p style="margin-bottom:10px">Senha do painel:</p><input id="tok" type="password" autocomplete="off"><br><button onclick="salvarToken()">Entrar</button></div>
+<div class="toolbar" id="bar" style="display:none"><button onclick="carregar()">Atualizar</button></div>
+<div id="lista"></div>
+<script>
+const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function getToken(){ try { return localStorage.getItem("gigiolab_admin")||""; } catch { return ""; } }
+function salvarToken(){ try { localStorage.setItem("gigiolab_admin", document.getElementById("tok").value.trim()); } catch {} carregar(); }
+async function carregar(){
+  const t = getToken();
+  const gate = document.getElementById("gate"), bar = document.getElementById("bar"), lista = document.getElementById("lista"), sub = document.getElementById("sub");
+  if (!t) { gate.style.display="block"; bar.style.display="none"; sub.textContent="acesso restrito"; return; }
+  let r;
+  try { r = await fetch("/api/leads", { headers: { Authorization: "Bearer "+t } }); }
+  catch { lista.innerHTML = '<p id="erro">Sem conexão — tenta de novo.</p>'; return; }
+  if (r.status === 401) { try{localStorage.removeItem("gigiolab_admin");}catch{} gate.style.display="block"; bar.style.display="none"; sub.textContent="senha incorreta"; return; }
+  const d = await r.json();
+  gate.style.display="none"; bar.style.display="flex";
+  const leads = (d.leads||[]).slice().reverse();
+  sub.textContent = leads.length + " lead(s) · atualizado " + new Date().toLocaleTimeString("pt-BR");
+  if (!leads.length) { lista.innerHTML = '<p class="vazio">Nenhum lead ainda. Eles aparecem aqui na hora que o agente registra.</p>'; return; }
+  lista.innerHTML = leads.map(l => {
+    const dt = l.ts ? new Date(l.ts).toLocaleString("pt-BR", {dateStyle:"short", timeStyle:"short"}) : "";
+    const fone = (l.tipo_contato||"") === "whatsapp" ? '<a class="zap" href="https://wa.me/55'+esc(String(l.contato||"").replace(/\\D/g,""))+'" target="_blank" rel="noopener">'+esc(l.contato)+' → chamar no WhatsApp</a>' : '<span class="zap">'+esc(l.contato)+'</span>';
+    const linhas = [["negócio",l.negocio],["dor",l.dor],["hoje",l.como_faz_hoje],["volume",l.volume],["urgência",l.urgencia],["mensagem",l.mensagem]]
+      .filter(x=>x[1]).map(x=>"<dt>"+x[0]+"</dt><dd>"+esc(x[1])+"</dd>").join("");
+    return '<div class="card"><h2>'+esc(l.nome||"(sem nome)")+' <span class="quando">'+esc(dt)+' · '+esc(l.origem||"")+'</span></h2>'+fone+(linhas?'<dl>'+linhas+'</dl>':'')+(l.resumo?'<div class="resumo">'+esc(l.resumo)+'</div>':'')+'</div>';
+  }).join("");
+}
+carregar();
+</script></body></html>`;
+
+function handlePainel(res) {
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" });
+  res.end(PAINEL_HTML);
+}
+
 function handleListLeads(req, res) {
   const auth = String(req.headers.authorization || "");
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -316,6 +381,7 @@ const server = http.createServer(async (req, res) => {
     if (url === "/api/health" && req.method === "GET") {
       return json(res, 200, { ok: true, service: "gigiolab-intake" });
     }
+    if (url === "/api/painel" && req.method === "GET") return handlePainel(res);
     if (!isAllowedOrigin(origin)) {
       return json(res, 403, { ok: false, error: "origem não autorizada" });
     }
