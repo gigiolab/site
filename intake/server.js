@@ -397,6 +397,7 @@ function handleProposta(url, res) {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     return res.end("não existe");
   }
+  console.log(`[proposta] ${slug} acessada`);
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" });
   res.end(html);
 }
