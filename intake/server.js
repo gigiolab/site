@@ -263,6 +263,10 @@ async function handleIntake(req, res, origin) {
         ip,
         ua: String(req.headers["user-agent"] || "").slice(0, 200),
         ...toolUse.input,
+        // transcrição da conversa até o registro (turnos de texto do visitante e do agente)
+        conversa: messages
+          .filter((m) => typeof m.content === "string")
+          .map((m) => ({ de: m.role === "user" ? "visitante" : "agente", texto: m.content })),
       });
     }
 
@@ -326,6 +330,11 @@ const PAINEL_HTML = `<!doctype html>
   dt { color:var(--dim); text-transform:uppercase; font-size:.66rem; letter-spacing:.1em; font-family:ui-monospace,Menlo,monospace; padding-top:3px; }
   dd { color:var(--off); }
   .resumo { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); color:var(--dim); font-size:.88rem; }
+  details.conv { margin-top:12px; border-top:1px dashed var(--line); padding-top:8px; }
+  details.conv summary { cursor:pointer; color:var(--terra); font-size:.78rem; font-family:ui-monospace,Menlo,monospace; }
+  details.conv p { margin:8px 0 0; font-size:.85rem; padding:8px 12px; border-radius:10px; max-width:92%; }
+  details.conv .mv { background:#1d2a22; }
+  details.conv .ma { background:#26262b; margin-left:auto; }
   .vazio, #erro { color:var(--dim); text-align:center; padding:40px 0; }
   #gate { display:none; text-align:center; padding:60px 0; }
   #gate input { background:var(--card); border:1px solid var(--line); border-radius:8px; color:var(--off); padding:12px 14px; width:min(320px,90%); font:inherit; }
@@ -360,7 +369,9 @@ async function carregar(){
     const fone = (l.tipo_contato||"") === "whatsapp" ? '<a class="zap" href="https://wa.me/55'+esc(String(l.contato||"").replace(/\\D/g,""))+'" target="_blank" rel="noopener">'+esc(l.contato)+' → chamar no WhatsApp</a>' : '<span class="zap">'+esc(l.contato)+'</span>';
     const linhas = [["negócio",l.negocio],["dor",l.dor],["hoje",l.como_faz_hoje],["volume",l.volume],["urgência",l.urgencia],["mensagem",l.mensagem]]
       .filter(x=>x[1]).map(x=>"<dt>"+x[0]+"</dt><dd>"+esc(x[1])+"</dd>").join("");
-    return '<div class="card"><h2>'+esc(l.nome||"(sem nome)")+' <span class="quando">'+esc(dt)+' · '+esc(l.origem||"")+'</span></h2>'+fone+(linhas?'<dl>'+linhas+'</dl>':'')+(l.resumo?'<div class="resumo">'+esc(l.resumo)+'</div>':'')+'</div>';
+    const conv = Array.isArray(l.conversa) && l.conversa.length
+      ? '<details class="conv"><summary>ver conversa ('+l.conversa.length+' mensagens)</summary>'+l.conversa.map(m=>'<p class="'+(m.de==="visitante"?"mv":"ma")+'">'+(m.de==="visitante"?"👤 ":"🤖 ")+esc(m.texto)+'</p>').join("")+'</details>' : '';
+    return '<div class="card"><h2>'+esc(l.nome||"(sem nome)")+' <span class="quando">'+esc(dt)+' · '+esc(l.origem||"")+'</span></h2>'+fone+(linhas?'<dl>'+linhas+'</dl>':'')+(l.resumo?'<div class="resumo">'+esc(l.resumo)+'</div>':'')+conv+'</div>';
   }).join("");
 }
 carregar();
