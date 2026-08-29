@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4173", "-d", "public"],
+      "port": 4173
+    },
+    {
+      "name": "intake",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["PORT=8787", "DATA_DIR=/tmp/gigiolab-intake-dev", "ADMIN_TOKEN=dev123", "node", "intake/server.js"],
+      "port": 8787
+    }
+  ]
+}
