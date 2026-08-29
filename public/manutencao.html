@@ -1,0 +1,577 @@
+<!--
+  Página de manutenção "Volto já." com mini-runner temático (o `g`
+  terracota pula bugs vermelhos). Preservada como asset — NÃO está em
+  uso pública hoje. Acessível preview em /manutencao.html.
+
+  Para ativar como home:
+    cd public/
+    mv index.html index-hero.html
+    mv manutencao.html index.html
+    git commit + push (webhook Dokploy dispara automático)
+
+  Para reverter:
+    mv index.html manutencao.html
+    mv index-hero.html index.html
+    git commit + push
+
+  Autor: sessão Claude Code · 2026-08-29 (aprovada pelo Geovane,
+  guardada pra ocasião futura — não usar sem consentimento).
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>gigiolab.dev — reformulando</title>
+  <meta name="description" content="A fábrica está reformulando. Volta já. Aproveita e joga um pouco.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+  <meta name="theme-color" content="#0A0A0A">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --obsidian: #0A0A0A;
+      --graphite: #1E1E1E;
+      --silver: #A8A8A8;
+      --off: #F7F7F5;
+      --terra: #D97757;
+      --bug: #e04a4a;
+      --hairline: #232323;
+      --title: "Space Grotesk", sans-serif;
+      --body: "Inter", sans-serif;
+      --mono: "JetBrains Mono", monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      background: var(--obsidian);
+      color: var(--silver);
+      font-family: var(--body);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100%;
+    }
+
+    ::selection { background: var(--terra); color: var(--obsidian); }
+
+    .wrap {
+      width: min(1000px, calc(100% - 40px));
+      margin-inline: auto;
+      padding-block: 32px 48px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: clamp(40px, 8vh, 80px);
+    }
+
+    .site-tag {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: .78rem;
+      letter-spacing: .18em;
+      color: var(--terra);
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .g-icon { height: 40px; width: auto; display: block; }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: .82rem;
+      color: var(--terra);
+      letter-spacing: .02em;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-family: var(--title);
+      font-weight: 700;
+      font-size: clamp(2.2rem, 5.4vw, 3.8rem);
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      color: var(--off);
+      max-width: 18ch;
+    }
+
+    .sub {
+      margin-top: 22px;
+      font-family: var(--title);
+      font-weight: 500;
+      font-size: clamp(1.05rem, 1.9vw, 1.35rem);
+      color: var(--silver);
+      max-width: 40ch;
+      line-height: 1.4;
+    }
+
+    /* ---------- jogo ---------- */
+    .game-wrap {
+      margin-top: clamp(40px, 6vh, 60px);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      background: var(--graphite);
+      padding: 18px;
+      position: relative;
+    }
+
+    .game-help {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--silver);
+      flex-wrap: wrap;
+    }
+
+    .game-help .keys kbd {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--off);
+      background: var(--obsidian);
+      border: 1px solid var(--hairline);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 0 2px;
+    }
+
+    .score {
+      display: flex;
+      gap: 20px;
+      color: var(--terra);
+    }
+
+    .score .num { color: var(--off); font-weight: 500; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background:
+        radial-gradient(1px 1px at 12% 20%, rgba(247,247,245,.20), transparent 100%),
+        radial-gradient(1px 1px at 78% 15%, rgba(247,247,245,.14), transparent 100%),
+        radial-gradient(1.5px 1.5px at 45% 35%, rgba(247,247,245,.10), transparent 100%),
+        radial-gradient(1px 1px at 85% 55%, rgba(247,247,245,.14), transparent 100%),
+        radial-gradient(1px 1px at 22% 65%, rgba(247,247,245,.12), transparent 100%),
+        var(--obsidian);
+      border-radius: 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .canvas-wrap {
+      position: relative;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 10, .82);
+      border-radius: 8px;
+      text-align: center;
+      padding: 24px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+
+    .overlay.on { opacity: 1; pointer-events: auto; }
+
+    .overlay .title {
+      font-family: var(--title);
+      font-weight: 700;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      color: var(--off);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .overlay .subtitle {
+      font-family: var(--mono);
+      font-size: .82rem;
+      color: var(--silver);
+      margin-bottom: 20px;
+    }
+
+    .overlay .subtitle .num {
+      color: var(--terra);
+      font-weight: 500;
+    }
+
+    .overlay button {
+      font-family: var(--title);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--obsidian);
+      background: var(--terra);
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease;
+    }
+
+    .overlay button:hover { background: #e08a68; transform: translateY(-1px); }
+
+    .overlay .hint {
+      margin-top: 14px;
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--silver);
+    }
+
+    .overlay .hint kbd {
+      font-family: var(--mono);
+      color: var(--off);
+      background: var(--graphite);
+      border: 1px solid var(--hairline);
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+
+    /* ---------- rodapé ---------- */
+    footer {
+      margin-top: clamp(48px, 8vh, 72px);
+      padding-top: 24px;
+      border-top: 1px solid var(--hairline);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: var(--mono);
+      font-size: .74rem;
+      color: var(--silver);
+      letter-spacing: .06em;
+    }
+
+    footer .email a {
+      color: var(--terra);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(217, 119, 87, .35);
+    }
+
+    footer .email a:hover { border-bottom-color: var(--terra); }
+
+    @media (max-width: 600px) {
+      .game-help { justify-content: center; }
+      .overlay { padding: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .overlay { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header>
+      <a class="site-tag" href="/">gigiolab.dev</a>
+      <svg class="g-icon" viewBox="0 0 16630.99 25273.64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Símbolo da GigioLab">
+        <path fill="#D97757" fill-rule="evenodd" d="M16630.99 16674.47l-5325.34 0 -7813.39 8599.18 5325.33 0 7813.4 -8599.18zm-8424.63 -16412.7c1585.9,0 3066.4,450.39 4321.52,1229.45l0 -1491.21 4015.9 0 0 4015.9 -1443.13 0c830.03,1282.52 1312.06,2810.99 1312.06,4452.21 0,4532.2 -3674.15,8206.35 -8206.35,8206.35 -4532.2,0 -8206.35,-3674.15 -8206.35,-8206.35 0,-4532.2 3674.15,-8206.35 8206.35,-8206.35zm0 3841.22c2410.81,0 4365.13,1954.32 4365.13,4365.13 0,2410.81 -1954.32,4365.12 -4365.13,4365.12 -2410.81,0 -4365.12,-1954.31 -4365.12,-4365.12 0,-2410.81 1954.31,-4365.13 4365.12,-4365.13z"/>
+      </svg>
+    </header>
+
+    <p class="eyebrow">// A fábrica está reformulando</p>
+    <h1>Volto já.</h1>
+    <p class="sub">Aproveita e joga um pouco enquanto isso. O <strong style="color:var(--terra)">g</strong> pula, os bugs vermelhos ficam pra trás.</p>
+
+    <div class="game-wrap">
+      <div class="game-help">
+        <div class="keys">
+          <kbd>ESPAÇO</kbd> ou <kbd>TAP</kbd> pra pular · <kbd>R</kbd> pra recomeçar
+        </div>
+        <div class="score">
+          <span>Distância: <span class="num" id="score">0</span></span>
+          <span>Melhor: <span class="num" id="best">0</span></span>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="game" width="900" height="280" aria-label="Mini-jogo runner: aperte espaço ou toque para pular"></canvas>
+        <div class="overlay on" id="overlay">
+          <div class="title" id="ov-title">Pronto pra pular bugs?</div>
+          <div class="subtitle" id="ov-subtitle">Aperta <kbd style="font-family:var(--mono);color:var(--off);background:var(--graphite);border:1px solid var(--hairline);border-radius:4px;padding:2px 6px;">ESPAÇO</kbd> pra começar</div>
+          <button id="ov-btn" type="button">Começar</button>
+          <div class="hint" id="ov-hint">ou toque a tela</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span>gigiolab.dev · fábrica de software</span>
+      <span class="email">prefere e-mail? <a href="mailto:geovane@gigiolab.dev?subject=Contato%20durante%20manuten%C3%A7%C3%A3o">geovane@gigiolab.dev</a></span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const overlay = document.getElementById("overlay");
+      const ovTitle = document.getElementById("ov-title");
+      const ovSubtitle = document.getElementById("ov-subtitle");
+      const ovBtn = document.getElementById("ov-btn");
+      const ovHint = document.getElementById("ov-hint");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const GROUND_Y = H - 44;
+
+      // Cores do brand
+      const COLOR = {
+        terra: "#D97757",
+        off: "#F7F7F5",
+        silver: "#A8A8A8",
+        hairline: "#232323",
+        bug: "#e04a4a",
+      };
+
+      // Path do "g" (viewBox 16630.99 x 25273.64) — escala pra caber em 44x66
+      const G_VB_W = 16630.99;
+      const G_VB_H = 25273.64;
+      const G_PATH = "M16630.99 16674.47l-5325.34 0 -7813.39 8599.18 5325.33 0 7813.4 -8599.18zm-8424.63 -16412.7c1585.9,0 3066.4,450.39 4321.52,1229.45l0 -1491.21 4015.9 0 0 4015.9 -1443.13 0c830.03,1282.52 1312.06,2810.99 1312.06,4452.21 0,4532.2 -3674.15,8206.35 -8206.35,8206.35 -4532.2,0 -8206.35,-3674.15 -8206.35,-8206.35 0,-4532.2 3674.15,-8206.35 8206.35,-8206.35zm0 3841.22c2410.81,0 4365.13,1954.32 4365.13,4365.13 0,2410.81 -1954.32,4365.12 -4365.13,4365.12 -2410.81,0 -4365.12,-1954.31 -4365.12,-4365.12 0,-2410.81 1954.31,-4365.13 4365.12,-4365.13z";
+      const gPath2D = new Path2D(G_PATH);
+
+      // Estado do player
+      const player = {
+        x: 80,
+        w: 44,
+        h: 62,
+        y: GROUND_Y - 62,
+        vy: 0,
+        onGround: true,
+      };
+      const GRAVITY = 0.72;
+      const JUMP_V = -13.5;
+
+      // Obstáculos (bugs)
+      let obstacles = [];
+      let baseSpeed = 5.2;
+      let speed = baseSpeed;
+      let spawnTimer = 0;
+      let nextSpawn = 90;
+
+      // Chão scroll
+      let groundOffset = 0;
+
+      // Estado do jogo
+      let state = "idle"; // idle | playing | over
+      let score = 0;
+      let best = parseInt(localStorage.getItem("gigiolab_run_best") || "0", 10) || 0;
+      bestEl.textContent = best;
+
+      function reset() {
+        obstacles = [];
+        player.y = GROUND_Y - player.h;
+        player.vy = 0;
+        player.onGround = true;
+        speed = baseSpeed;
+        spawnTimer = 0;
+        nextSpawn = 90;
+        score = 0;
+        scoreEl.textContent = 0;
+      }
+
+      function start() {
+        reset();
+        state = "playing";
+        overlay.classList.remove("on");
+      }
+
+      function gameOver() {
+        state = "over";
+        if (score > best) {
+          best = score;
+          bestEl.textContent = best;
+          try { localStorage.setItem("gigiolab_run_best", String(best)); } catch (e) {}
+          ovTitle.textContent = "Novo recorde!";
+          ovSubtitle.innerHTML = 'Distância: <span class="num" style="color:var(--terra);">' + score + "</span>";
+        } else {
+          ovTitle.textContent = "Peguei um bug.";
+          ovSubtitle.innerHTML =
+            'Distância: <span class="num" style="color:var(--terra);">' + score +
+            '</span> · Melhor: <span class="num" style="color:var(--terra);">' + best + '</span>';
+        }
+        ovBtn.textContent = "Tentar de novo";
+        ovHint.innerHTML = 'ou aperta <kbd style="font-family:var(--mono);color:var(--off);background:var(--graphite);border:1px solid var(--hairline);border-radius:4px;padding:2px 6px;">R</kbd>';
+        overlay.classList.add("on");
+      }
+
+      function jump() {
+        if (state !== "playing") { start(); return; }
+        if (player.onGround) {
+          player.vy = JUMP_V;
+          player.onGround = false;
+        }
+      }
+
+      function spawnObstacle() {
+        // Variação: bug grande ou pequeno
+        const big = Math.random() < 0.35;
+        const w = big ? 34 : 24;
+        const h = big ? 40 : 28;
+        obstacles.push({
+          x: W + 20,
+          y: GROUND_Y - h,
+          w: w,
+          h: h,
+        });
+      }
+
+      function tick() {
+        // Fundo (o CSS já pinta as estrelas — canvas transparente sobre gradiente do CSS via seu próprio fundo, então precisa limpar sem cobrir)
+        ctx.clearRect(0, 0, W, H);
+
+        // Chão
+        ctx.strokeStyle = COLOR.terra;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, GROUND_Y);
+        ctx.lineTo(W, GROUND_Y);
+        ctx.stroke();
+
+        // Tracinhos passando (movement feedback)
+        ctx.strokeStyle = COLOR.hairline;
+        ctx.lineWidth = 1;
+        const dashLen = 16;
+        const gap = 22;
+        const period = dashLen + gap;
+        groundOffset = (groundOffset + speed) % period;
+        for (let x = -groundOffset; x < W; x += period) {
+          ctx.beginPath();
+          ctx.moveTo(x, GROUND_Y + 8);
+          ctx.lineTo(x + dashLen, GROUND_Y + 8);
+          ctx.stroke();
+        }
+
+        if (state === "playing") {
+          // Física do player
+          player.vy += GRAVITY;
+          player.y += player.vy;
+          if (player.y >= GROUND_Y - player.h) {
+            player.y = GROUND_Y - player.h;
+            player.vy = 0;
+            player.onGround = true;
+          }
+
+          // Spawner
+          spawnTimer++;
+          if (spawnTimer >= nextSpawn) {
+            spawnObstacle();
+            spawnTimer = 0;
+            // Próximo spawn em 55..115 frames, apertando com velocidade
+            const min = Math.max(35, 90 - Math.floor(speed * 4));
+            const max = Math.max(80, 150 - Math.floor(speed * 4));
+            nextSpawn = min + Math.floor(Math.random() * (max - min));
+          }
+
+          // Move obstáculos
+          for (const o of obstacles) o.x -= speed;
+          obstacles = obstacles.filter(o => o.x + o.w > -10);
+
+          // Aumenta velocidade lentamente
+          speed += 0.0025;
+
+          // Score
+          score++;
+          if (score % 3 === 0) scoreEl.textContent = score;
+
+          // Colisão
+          for (const o of obstacles) {
+            if (
+              player.x < o.x + o.w - 4 &&
+              player.x + player.w - 6 > o.x + 2 &&
+              player.y < o.y + o.h - 2 &&
+              player.y + player.h - 2 > o.y + 2
+            ) {
+              scoreEl.textContent = score;
+              gameOver();
+              break;
+            }
+          }
+        }
+
+        // Desenha player (o "g" terracota)
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        const sx = player.w / G_VB_W;
+        const sy = player.h / G_VB_H;
+        ctx.scale(sx, sy);
+        ctx.fillStyle = COLOR.terra;
+        ctx.fill(gPath2D, "evenodd");
+        ctx.restore();
+
+        // Desenha obstáculos (bugs)
+        for (const o of obstacles) {
+          // corpo
+          ctx.fillStyle = COLOR.bug;
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          // "olhos" (2 pontinhos brancos)
+          ctx.fillStyle = COLOR.off;
+          const eye = 3;
+          ctx.fillRect(o.x + 5, o.y + 6, eye, eye);
+          ctx.fillRect(o.x + o.w - 5 - eye, o.y + 6, eye, eye);
+          // "pernas" (3 tracinhos pra baixo)
+          ctx.strokeStyle = COLOR.bug;
+          ctx.lineWidth = 2;
+          const legY = o.y + o.h;
+          ctx.beginPath();
+          ctx.moveTo(o.x + 4, legY);
+          ctx.lineTo(o.x + 4, legY + 6);
+          ctx.moveTo(o.x + o.w / 2, legY);
+          ctx.lineTo(o.x + o.w / 2, legY + 6);
+          ctx.moveTo(o.x + o.w - 4, legY);
+          ctx.lineTo(o.x + o.w - 4, legY + 6);
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      // Input
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          e.preventDefault();
+          jump();
+        } else if (e.code === "KeyR" && state === "over") {
+          e.preventDefault();
+          start();
+        }
+      });
+
+      canvas.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        jump();
+      });
+
+      ovBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        start();
+      });
+
+      // Loop
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
