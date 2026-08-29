@@ -382,6 +382,25 @@ function handlePainel(res) {
   res.end(PAINEL_HTML);
 }
 
+// Propostas comerciais — HTML por lead em /data/propostas/<slug>.html, slug não-adivinhável.
+// Fora do repo público de propósito: preço de cliente não vai pro GitHub.
+function handleProposta(url, res) {
+  const slug = url.slice("/api/proposta/".length).replace(/\/$/, "");
+  if (!/^[a-z0-9-]{3,80}$/.test(slug)) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("não existe");
+  }
+  let html;
+  try {
+    html = fs.readFileSync(path.join(DATA_DIR, "propostas", slug + ".html"), "utf8");
+  } catch (_) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("não existe");
+  }
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" });
+  res.end(html);
+}
+
 function handleListLeads(req, res) {
   const auth = String(req.headers.authorization || "");
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -608,6 +627,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, service: "gigiolab-intake" });
     }
     if (url === "/api/painel" && req.method === "GET") return handlePainel(res);
+    if (url.startsWith("/api/proposta/") && req.method === "GET") return handleProposta(url, res);
     if (url === "/api/whatsapp" && req.method === "GET") return handleWaVerify(req, res);
     if (url === "/api/whatsapp" && req.method === "POST") return await handleWaWebhook(req, res);
     if (!isAllowedOrigin(origin)) {
