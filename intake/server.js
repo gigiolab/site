@@ -24,7 +24,7 @@ const API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 400;
 const MAX_TURNS = 40; // mensagens no histórico (user+assistant)
 const MAX_CHAR_MSG = 2000;
